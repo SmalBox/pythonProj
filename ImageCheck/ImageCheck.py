@@ -7,84 +7,129 @@ __author__ = 'SmalBox'
 
 import os
 import shutil
-from PIL import Image
+import time
+from PIL import Image, ImageFile
+ImageFile.LOAD_TRUNCATED_IMAGES = True
 
+startTime = time.time()
 # 源目录
-sourceDir = './A'
+sourceDir = '.\\A'
 # 目标目录
-targetDir = './B'
+targetDir = '.\\B'
 
-print('==开始 图像查重==')
+print('==开始 图像查重 start==', flush=True)
 
 ### Start
 
-# 文件对比函数_ImgContrast(sourceImgPath, targetImgPath), 返回两个图片是否相同的bool值
-def _ImgContrast(sourceImgPath, targetImgPath):
-    # 两个图像对比
-    # 打开两个图片
-    try:
-        sourceImg = Image.open(sourceImgPath, 'r')
-        targetImg = Image.open(targetImgPath, 'r')
-    except:
-        print('\n无法打开文件：%s' % sourceImgPath)
-        return -1
-    
-    # 对比两图片宽高
-    if sourceImg.size == targetImg.size:
-        width = sourceImg.width - 1
-        height = sourceImg.height - 1
-        # 对比两图片四角像素(0, 0) (width, 0) (width, height) (0, height)
-        if sourceImg.getpixel((0, 0)) == targetImg.getpixel((0, 0)) and\
-        sourceImg.getpixel((width, 0)) == targetImg.getpixel((width, 0)) and\
-        sourceImg.getpixel((width, height)) == targetImg.getpixel((width, height)) and\
-        sourceImg.getpixel((0, height)) == targetImg.getpixel((0, height)):
-            # 对比每个像素***
-            sourceImg.close()
-            targetImg.close()
-            return True
-        else:
-            sourceImg.close()
-            targetImg.close()
-            return False
-    else:
-        sourceImg.close()
-        targetImg.close()
-        return False
-    # 返回两图片是否相同
+# 获取源目录下图片数据信息
+def _GetImageInfo(imageDirPath):
+    imgList = [d for d in os.listdir(imageDirPath)]
+    imgInfo = list()
+    openFailList = list()
+    completeNum = 0
+    for imgName in imgList:
+        try:
+            with Image.open(imageDirPath + '\\' + imgName, 'r') as img:
+                imgSize = img.size
+                img00 = img.getpixel((0, 0))
+                imgWidth0 = img.getpixel((imgSize[0] - 1, 0))
+                imgWidthHeight = img.getpixel((imgSize[0] - 1, imgSize[1] - 1))
+                img0Height = img.getpixel((0, imgSize[1] - 1))
+                imgInfo.append({\
+                    'name' : imgName,\
+                    'size' : imgSize,\
+                    'img00' : img00,\
+                    'imgWidth0' : imgWidth0,\
+                    'imgWidthHeight' : imgWidthHeight,\
+                    'img0Height' : img0Height})
+        except:
+            openFailList.append(imgName)
+            print('\nOpen Error！，FileName：%s，成功：%d，失败：%d' % (imgName, len(imgInfo), len(openFailList)), flush=True)
+            time.sleep(1)
+            continue
+        completeNum += 1
+        print('\r已完成(CMPE) %d ，进度(PROG)：%.2f%%，%s，imgInfoLen:%d，Time：%.2fs'\
+            % (completeNum, \
+            completeNum * 100 / len(imgList), \
+            imageDirPath + '\\' + imgName, \
+            len(imgInfo), \
+            (time.time() - startTime)), \
+            end='', flush=True)
+    print('成功：%d，失败：%d' % (len(imgInfo), len(openFailList)), flush=True)
+    print('失败文件：%s' % openFailList)
+    return imgInfo
 
-# 获取源目录下文件名列表，存入sourceList
-sourceList = [d for d in os.listdir(sourceDir)]
+
+# 文件信息对比函数，对比两个图片信息是否相同
+def _ImgInfoContrast(sourceImgInfo, targetImgInfo):
+    if sourceImgInfo['size'] == targetImgInfo['size'] and \
+    sourceImgInfo['img00'] == targetImgInfo['img00'] and \
+    sourceImgInfo['imgWidth0'] == targetImgInfo['imgWidth0'] and \
+    sourceImgInfo['imgWidthHeight'] == targetImgInfo['imgWidthHeight'] and \
+    sourceImgInfo['img0Height'] == targetImgInfo['img0Height']:
+        return True
+    else:
+        return False
+
+# main:
+
+# 预处理，将源目录中数据加载到内存
+print('开始预加载！\n', flush=True)
+sourceImgInfo = _GetImageInfo(sourceDir)
+num = 5
+for i in range(5):
+    print('\r预加载完成！ %ds后开始图像查重\n' % num, flush=True)
+    num -= 1
+    time.sleep(1)
 
 # 创建目标目录
 if not os.path.exists(targetDir):
     os.mkdir(targetDir)
-
+    
 # 遍历源目录，将不重复的文件存入目标目录中
 completeNum = 0
-for sourceFile in sourceList:
-    # 获取目标目录下文件名列表，存入targetList
-    targetList = [d for d in os.listdir(targetDir)]
+
+# 创建sizeDict将查过的图片按照尺寸进行分类
+sizeDict = { }
+
+for sourceFile in sourceImgInfo:
+    targetList = [d for d in os.listdir(targetDir)]  # 获取目标目录下文件名列表，存入targetList
+    imgW, imgH = sourceFile['size']  # 获取要比较文件的宽高
+    imgSize = str(imgW) + 'x' + str(imgH)
+
     if len(targetList) == 0:
         # 如果目标文件夹里没有文件，则直接放入
-        shutil.copy(sourceDir + '\\' + sourceFile, targetDir)
+        shutil.copy(sourceDir + '\\' + sourceFile['name'], targetDir)
+        # 根据尺寸存入字典
+        sizeDict.update({imgSize : [sourceFile]})
+        completeNum += 1
         continue
-    # 遍历目标目录下所有文件，与源中取出的文件进行对比
-    findCopy = False  # 设置是否找到副本标记
-    for targetFile in targetList:
-        # sourceFile与targetFile对比
-        if _ImgContrast(sourceDir + '\\' + sourceFile, targetDir + '\\' + targetFile) == -1:
-            findCopy = True
-            break
-        if _ImgContrast(sourceDir + '\\' + sourceFile, targetDir + '\\' + targetFile):
-            findCopy = True
-            break
-    if not findCopy:
-        # 如果没有重复副本，则将sourceFile 复制到 targetDir目标目录下
-        shutil.copy(sourceDir + '\\' + sourceFile, targetDir)
 
+    findCopy = False  # 设置是否找到副本标记
+    if imgSize in sizeDict:
+        for targetFile in sizeDict[imgSize]:
+            print('\r已完成(CMPE) %d ，进度(PROG)：%.2f%%，%s <=> %s，Time：%.2fmin'\
+                % (completeNum, \
+                completeNum * 100 / len(sourceImgInfo), \
+                sourceDir + '\\' + sourceFile['name'], \
+                targetDir + '\\' + targetFile['name'], \
+                (time.time() - startTime) / 60), \
+                end='', flush=True)
+            result = _ImgInfoContrast(sourceFile, targetFile)
+            if result == -1 or result:
+                findCopy = True
+                break
+        if not findCopy:
+            # 如果没有重复副本，则将sourceFile 复制到 targetDir目标目录下
+            shutil.copy(sourceDir + '\\' + sourceFile['name'], targetDir)
+            # 根据尺寸存入字典
+            sizeDict[imgSize].append(sourceFile)
+    else:
+        # 如果没有同大小的图片，则直接复制，创建新的尺寸分类
+        sizeDict.update({imgSize : [sourceFile]})
+        shutil.copy(sourceDir + '\\' + sourceFile['name'], targetDir)
     completeNum += 1
-    print('\r已经完成 %d 个，进度：%.2f%%' % (completeNum, completeNum * 100 / len(sourceList)), end='')
 
 ### End
 
-print('\n==图像查重 结束==')
+print('\n==图像查重 结束 End==', flush=True)
