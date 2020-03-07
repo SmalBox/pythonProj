@@ -10,3 +10,8 @@ python实现的一些小工具
 
    - **Description**
       - 图像查重，将扫描sourceDir中所有图片，提取出不重复的图片到TargetDir目录中
+      
+## PyReg
+
+   - **Description**
+      - Python **正则表达式** 文本替换工具
