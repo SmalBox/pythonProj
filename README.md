@@ -15,3 +15,8 @@ python实现的一些小工具
 
    - **Description**
       - Python **正则表达式** 文本替换工具
+
+## ImageResize
+
+   - **Description**
+      - 批量重置图片大小
