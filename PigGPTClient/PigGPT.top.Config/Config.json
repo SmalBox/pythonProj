@@ -1,4 +1,8 @@
 {
+<<<<<<< HEAD
     "url" : "http://chat.PigGPT.top/PigGPT",
     "dataPath" : "./PigGPT.top.Data"
+=======
+    "url" : "http://PigGPTServer"
+>>>>>>> 839b772d3a007f259df3a54eac0137cb83ba3fb6
 }
