@@ -1,0 +1,56 @@
+[
+    {
+        "user": {
+            "role": "user",
+            "content": "你是资深的全栈工程师，请介绍一下flask的主要功能。"
+        },
+        "pigGPTContent": {
+            "choices": [
+                {
+                    "finish_reason": "stop",
+                    "index": 0,
+                    "message": {
+                        "content": "\n\nFlask是一个基于Python编写的轻量级Web应用框架，它提供了丰富的功能来帮助开发人员构建Web应用。以下是Flask的主要功能：\n\n1. 轻量级框架：Flask是一个轻型的Web框架，它的核心功能非常简单。它没有许多大型Web框架中的复杂功能，这使得Flask非常易于学习和使用。\n\n2. 路由：使用Flask，您可以轻松创建路由以响应不同的HTTP请求。\n\n3. 模板：Flask支持使用模板引擎来渲染HTML文件。这使得开发人员可以更轻松地创建动态Web应用程序。\n\n4. 数据库支持：Flask可以使用多种不同的数据库进行数据存储，包括SQLite、MySQL、PostgreSQL等。\n\n5. 扩展性：Flask支持许多可扩展的模块，包括表单处理、电子邮件、服务端推送等。\n\n6. 连接到其他应用：Flask可以与其他应用程序进行协作，包括通过REST API连接到其他应用程序。\n\n总之，Flask提供了一个简单、易于学习和使用的Web框架，使开发人员可以快速轻松地构建Web应用程序。",
+                        "role": "assistant"
+                    }
+                }
+            ],
+            "created": 1679595220,
+            "id": "chatcmpl-6xJjQBOXwOxnDPXR4gYA7dGX8Lx6Y",
+            "model": "gpt-3.5-turbo-0301",
+            "object": "chat.completion",
+            "usage": {
+                "completion_tokens": 365,
+                "prompt_tokens": 33,
+                "total_tokens": 398
+            }
+        }
+    },
+    {
+        "user": {
+            "role": "user",
+            "content": "哪些上线的网站服务是使用flask。"
+        },
+        "pigGPTContent": {
+            "choices": [
+                {
+                    "finish_reason": "stop",
+                    "index": 0,
+                    "message": {
+                        "content": "有很多知名的网站和服务使用了Flask作为其Web框架，以下是其中一些：\n\n1. Pinterest：一个以图片分享为主题的社交媒体网站。\n\n2. Twilio：一家提供云通讯服务的公司。\n\n3. Uber：一家提供打车服务的公司。\n\n4. Udemy：一个在线教育平台，提供各种课程。\n\n5. Zillow：一个提供房地产信息的网站，它帮助人们找到房子和房地产投资。\n\n6. Flask官方网站：Flask官方网站本身就是一个使用Flask开发的网站，它提供了与Flask相关的文档、资源和社区支持。\n\n总之，Flask是一种广泛使用的Python Web框架，许多知名的网站和服务都采用了它来构建其Web应用程序。",
+                        "role": "assistant"
+                    }
+                }
+            ],
+            "created": 1679595300,
+            "id": "chatcmpl-6xJkiByklbO9JA3P2ZtuU47CEgvBV",
+            "model": "gpt-3.5-turbo-0301",
+            "object": "chat.completion",
+            "usage": {
+                "completion_tokens": 242,
+                "prompt_tokens": 422,
+                "total_tokens": 664
+            }
+        }
+    }
+]

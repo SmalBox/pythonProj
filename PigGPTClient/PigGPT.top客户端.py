@@ -19,8 +19,8 @@ import glob
 
 # region 启动提示
 print("\n\n")
-print("==> 我是 PigGPT V0.1.0 <==")
-print("==> (・ω・)我没有记忆力,我只记得当下这句话的问题 <==")
+print("==> 我是 PigGPT V1.0.0 <==")
+print("==> (・ω・)我有记忆力,我会结合当前会话的所有内容与你交谈 <==")
 print("==> (・ω・) 输入 “886” 结束对话 <==")
 print("\n")
 # endregion
@@ -43,108 +43,136 @@ with open("./PigGPT.top.Config/Config.json", "r", encoding="utf-8") as f:
 # endregion
 
 # region 获取本地数据内容
-dataPath = os.path.join(dataPath, "*.json")
+dataPathMatch = os.path.join(dataPath, "*.json")
 passageNames = []
 print("0.创建新会话")
 passageIndex = 1
-for name in glob.glob(dataPath):
+for name in glob.glob(dataPathMatch):
     passageNames.append(name)
-    print(str(passageIndex) + "." + name)
+    print(str(passageIndex) + "." + os.path.basename(name))
+    passageIndex += 1
 print("\n")
 
 # endregion
 
 # region 选择会话
-selectedPassageIndex = input("输入序号选择会话：")
+selectedPassageIndex = input("输入序号选择会话(输入q退出)：")
 while True:
     try:
+        # q退出程序
+        if selectedPassageIndex.lower() == "q":
+            break
         isError = int(selectedPassageIndex) < 0 or \
             int(selectedPassageIndex) > len(passageNames)
         if isError:
-            selectedPassageIndex = input("输入序号选择会话：")
+            selectedPassageIndex = input("输入序号选择会话(输入q退出)：")
         else:
             break
     except:
-        selectedPassageIndex = input("输入序号选择会话：")
+        selectedPassageIndex = input("输入序号选择会话(输入q退出)：")
         continue
 # endregion
 
-if int(selectedPassageIndex) == 0: # 创建新对话
-# region 手动起名阶段(后续会替换成gpt总结第1轮对话自动起名)
-    passageName = input("此段对话的主题：")
-# endregion
-else:
-# region 显示内容阶段,将之前的会话记录展示出来
-    passageName = passageNames[passageIndex - 1]
-    with open(passageName, "r", encoding="utf-8") as f:
-        content = json.load(f)
-    for round in content:
-        userContent = round["user"]
-        pigGPTContent = round["pigGPTContent"]
-        print("====> User: <====")
-        print(userContent["content"] + "\n")
-        print("====> PigGPT: <====")
-        print(pigGPTContent["choices"][0]["message"]["content"] + "\n")
-# endregion
-
-# region 输入循环
-inputQuestion = ""
-while inputQuestion != "886":
-    # 数据输入
-    inputQuestion = input("对PigGPT(・ω・)说：")
-    while inputQuestion == "":
-        print("啥也没说的(´･ω･`)?\n")
-        inputQuestion = input("对PigGPT(・ω・)说：")
-    if (inputQuestion == "886"):
-        print("\n==> 886 (・ω・) Bye~ <==\n")
-        input("按任意键退出……")
-        break
-    print("==> 我在思考~ 等我一下组织语言~ (・ω・) En… <==")
-
-    # 准备对话数据数组
-    # 取json中本会话之前的数据
-    lastMessage = ""
-    with open(passageName, "r", encoding="utf-8") as f:
-        content = json.load(f)
-    for round in content:
-        userContent = round["user"]
-        pigGPTContent = round["pigGPTContent"]["choices"][0]["message"]
-        json.dumps(json.loads(lastMessage), userContent, pigGPTContent)
-    # 组装好本次数据
-    curMessage = [{"role":"user", "content": inputQuestion},]
-    # 拼装好对话数组
-    messages = json.dumps(json.loads(lastMessage), curMessage)
-
-    # JSON数据
-    data = {
-        "token": "",
-        "model": "",
-        "messages": messages
-    }
-
-    # 将字典转换为JSON格式的字符串
-    json_data = json.dumps(data)
-
-    # 使用POST方法发送JSON请求
-    response = requests.post(url, data=json_data, headers=headers)
-
-    # 检查响应状态码
-    if response.status_code == 200:
-        # 本地存储
-        with open(passageName, "w", encoding="utf-8") as f:
-            # 本次会话请求、本次会话返回 添加存入本地数据
-            newElement = {"user": curMessage, "pigGPTContent": response.json()}
-            json.dumps(content, newElement)
-
-        # 打印显示
-        print("\n")
-        print("PigGPT(・ω・)说：\n", response.json()["choices"][0]["message"]["content"])
-        print("\n")
+# q退出程序
+if selectedPassageIndex.lower() != "q":
+    if int(selectedPassageIndex) == 0: # 创建新对话
+    # region 手动起名阶段(后续会替换成gpt总结第1轮对话自动起名)
+        passageName = input("此段对话的主题：")
+        passageFilePath = os.path.join(dataPath, passageName + ".json")
+    # endregion
     else:
-        print("请求失败！")
-        print("状态码：", response.status_code)
-        print("响应内容：", response.text)
-        print("请检查网络，或重启程序，实在不行请联系 人工GPT (・ω・)\n")
-        input("按任意键退出……")
-        break
-# endregion
+    # region 显示内容阶段,将之前的会话记录展示出来
+        passageFilePath = passageNames[int(selectedPassageIndex) - 1]
+        try:
+            with open(passageFilePath, "r", encoding="utf-8") as f:
+                content = json.load(f)
+            for round in content:
+                userContent = round["user"]
+                pigGPTContent = round["pigGPTContent"]
+                print("====> User: <====")
+                print(userContent["content"] + "\n")
+                print("====> PigGPT: <====")
+                print(pigGPTContent["choices"][0]["message"]["content"] + "\n")
+        except:
+            pass
+    # endregion
+
+    # region 输入循环
+    inputQuestion = ""
+    while inputQuestion != "886":
+        # 数据输入
+        inputQuestion = input("对PigGPT(・ω・)说：")
+        while inputQuestion == "":
+            print("啥也没说的(´･ω･`)?\n")
+            inputQuestion = input("对PigGPT(・ω・)说：")
+        if (inputQuestion == "886"):
+            print("\n==> 886 (・ω・) Bye~ <==\n")
+            input("按任意键退出……")
+            break
+        print("==> 我在思考~ 等我一下组织语言~ (・ω・) En… <==")
+
+        # 准备对话数据数组
+        # 取json中本会话之前的数据
+        lastMessage = []
+        if os.path.exists(passageFilePath):
+            try:
+                with open(passageFilePath, "r", encoding="utf-8") as f:
+                    content = json.load(f)
+                for round in content:
+                    userContent = round["user"]
+                    pigGPTContent = round["pigGPTContent"]["choices"][0]["message"]
+                    lastMessage.append(userContent)
+                    lastMessage.append(pigGPTContent)
+            except:
+                pass
+        # 组装好本次数据
+        curMessage = {"role":"user", "content": inputQuestion}
+        # 拼装好对话数组
+        lastMessage.append(curMessage)
+        json.dumps(lastMessage)
+        messages = lastMessage
+
+        # JSON数据
+        data = {
+            "token": "",
+            "model": "",
+            "messages": messages
+        }
+
+        # 将字典转换为JSON格式的字符串
+        json_data = json.dumps(data)
+
+        # 使用POST方法发送JSON请求
+        response = requests.post(url, data=json_data, headers=headers)
+
+        # 检查响应状态码
+        if response.status_code == 200:
+            if os.path.exists(passageFilePath):
+                try:
+                    with open(passageFilePath, "r", encoding="utf-8") as f:
+                        content = json.load(f)
+                except:
+                    content = []
+            else:
+                content = []
+            # 本地存储
+            with open(passageFilePath, "w", encoding="utf-8") as f:
+                # 本次会话请求、本次会话返回 添加存入本地数据
+                newElement = {"user": curMessage, "pigGPTContent": response.json()}
+                content.append(newElement)
+                #newDataStr = json.dumps(newContent)
+                #json.dump(json.loads(newDataStr), f, indent=4, ensure_ascii=False)
+                json.dump(content, f, indent=4, ensure_ascii=False)
+
+            # 打印显示
+            print("\n")
+            print("PigGPT(・ω・)说：\n", response.json()["choices"][0]["message"]["content"])
+            print("\n")
+        else:
+            print("请求失败！")
+            print("状态码：", response.status_code)
+            print("响应内容：", response.text)
+            print("请检查网络，或重启程序，实在不行请联系 人工GPT (・ω・)\n")
+            input("按任意键退出……")
+            break
+    # endregion
