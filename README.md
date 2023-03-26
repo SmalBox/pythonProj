@@ -24,3 +24,7 @@ python实现的一些小工具
 ## PigGPTClient
    - **Description**
       - PigGPT客户端，配合PigGPTServer服务端在Win终端中直接使用GPT
+
+## DipSugarEncrypt
+   - **Description**
+      - 蘸糖加密，简单的文件对称加密
