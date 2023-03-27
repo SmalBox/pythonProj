@@ -3,6 +3,12 @@ import json
 import requests
 import os
 import glob
+import time
+
+
+# region V1.0.1 当前版本
+# 增强请求发送时的异常捕获，自动重发。
+# endregion
 
 # region V1.0.0 版本需求
 # 本地数据从当前文件夹的 PigGPT.top.Data 取
@@ -142,37 +148,51 @@ if selectedPassageIndex.lower() != "q":
         # 将字典转换为JSON格式的字符串
         json_data = json.dumps(data)
 
-        # 使用POST方法发送JSON请求
-        response = requests.post(url, data=json_data, headers=headers)
+        while True:
+            requestTimes = 0
+            try:
+                # 使用POST方法发送JSON请求
+                response = requests.post(url, data=json_data, headers=headers)
+                # 检查响应状态码
+                if response.status_code == 200:
+                    if os.path.exists(passageFilePath):
+                        try:
+                            with open(passageFilePath, "r", encoding="utf-8") as f:
+                                content = json.load(f)
+                        except:
+                            content = []
+                    else:
+                        content = []
+                    # 本地存储
+                    with open(passageFilePath, "w", encoding="utf-8") as f:
+                        # 本次会话请求、本次会话返回 添加存入本地数据
+                        newElement = {"user": curMessage, "pigGPTContent": response.json()}
+                        content.append(newElement)
+                        #newDataStr = json.dumps(newContent)
+                        #json.dump(json.loads(newDataStr), f, indent=4, ensure_ascii=False)
+                        json.dump(content, f, indent=4, ensure_ascii=False)
 
-        # 检查响应状态码
-        if response.status_code == 200:
-            if os.path.exists(passageFilePath):
-                try:
-                    with open(passageFilePath, "r", encoding="utf-8") as f:
-                        content = json.load(f)
-                except:
-                    content = []
-            else:
-                content = []
-            # 本地存储
-            with open(passageFilePath, "w", encoding="utf-8") as f:
-                # 本次会话请求、本次会话返回 添加存入本地数据
-                newElement = {"user": curMessage, "pigGPTContent": response.json()}
-                content.append(newElement)
-                #newDataStr = json.dumps(newContent)
-                #json.dump(json.loads(newDataStr), f, indent=4, ensure_ascii=False)
-                json.dump(content, f, indent=4, ensure_ascii=False)
-
-            # 打印显示
-            print("\n")
-            print("PigGPT(・ω・)说：\n", response.json()["choices"][0]["message"]["content"])
-            print("\n")
-        else:
-            print("请求失败！")
-            print("状态码：", response.status_code)
-            print("响应内容：", response.text)
-            print("请检查网络，或重启程序，实在不行请联系 人工GPT (・ω・)\n")
-            input("按任意键退出……")
-            break
+                    # 打印显示
+                    print("\n")
+                    print("PigGPT(・ω・)说：\n", response.json()["choices"][0]["message"]["content"])
+                    print("\n")
+                    break
+                else:
+                    print("请求失败！")
+                    print("状态码：", response.status_code)
+                    print("响应内容：", response.text)
+                    print("请检查网络，或重启程序，实在不行请联系 人工GPT (・ω・)\n")
+                    input("按任意键继续……")
+                    break
+            except Exception as e:
+                if requestTimes < 3:
+                    time.sleep(5)
+                    print(e)
+                    print("\n请求异常，正在重新请求。 请稍后……")
+                    requestTimes += 1
+                    continue
+                else:
+                    print("请检查网络，或重启程序，实在不行请联系 人工GPT (・ω・)\n")
+                    input("按任意键继续……")
+                    break
     # endregion
